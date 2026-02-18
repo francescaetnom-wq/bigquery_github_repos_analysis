@@ -3,10 +3,10 @@ SQL analysis on GitHub public dataset (BigQuery) to identify top Python committe
 
 
 GitHub Python Ecosystem Analysis: 2024-2025
-1. Project Context
+## 1. Project Context
 This analysis targets the bigquery-public-data.github_repos dataset. The goal was to isolate high-impact human contributors within the Python ecosystem while minimizing cloud compute costs and filtering automated noise.
 
-2. Technical Implementation & Constraints
+## 2. Technical Implementation & Constraints
 2.1 Schema Navigation
 The GitHub dataset uses a non-normalized, nested architecture.
 
@@ -21,21 +21,21 @@ Optimization: By using a CTE to pre-identify Python-specific repos and applying 
 
 Persistence: Final results were materialized into a permanent table to avoid redundant scan costs for future BI consumption.
 
-3. Data Integrity & Noise Reduction
+## 3. Data Integrity & Noise Reduction
 Raw GitHub data is heavily saturated with automated activity. I implemented a multi-stage filtering strategy:
 
 Regex Filtering: Used REGEXP_CONTAINS to strip out common CI/CD and system patterns (bot, helper, engine, etc.).
 
 Thresholding: Applied HAVING commit_count > 5 to remove transient contributors and focus on consistent maintainers.
 
-4. Observations
+## 4. Observations
 Timeline: The dataset snapshot used is current as of September 23, 2025.
 
 Outliers: Despite filtering, high-volume automated accounts (e.g., Matthew Martin) remain in the top tier. This confirms that simple string matching is insufficient for full bot-detection and requires further behavioral analysis.
 
 Validation: The presence of established maintainers (e.g., Jelmer Vernooij) validates the extraction logic.
 
-5. Repository Structure
+## 5. Repository Structure
 /sql: top_python_contributors.sql - Optimized extraction script.
 
 /data: results_sample.csv - Sample output of the processed dataset.
