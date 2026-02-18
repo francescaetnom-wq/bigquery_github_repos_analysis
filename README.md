@@ -2,37 +2,40 @@
 SQL analysis on GitHub public dataset (BigQuery) to identify top Python committers from Jan 2024 to Sep 2025. Managed nested ARRAY/STRUCT fields using UNNEST and TIMESTAMP conversion, optimized query cost (-90%), and applied regex-based filtering to exclude bots and automation noise.
 
 
-# Deep Dive into GitHub's Python Ecosystem (2024-2025)
+GitHub Python Ecosystem Analysis: 2024-2025
+1. Project Context
+This analysis targets the bigquery-public-data.github_repos dataset. The goal was to isolate high-impact human contributors within the Python ecosystem while minimizing cloud compute costs and filtering automated noise.
 
-## 🎯 Project Overview
-This project explores the `bigquery-public-data.github_repos` dataset (over **3TB**) to identify the most active Python contributors. The goal was to extract meaningful human insights from a massive volume of raw event logs while maintaining cost efficiency and data quality.
+2. Technical Implementation & Constraints
+2.1 Schema Navigation
+The GitHub dataset uses a non-normalized, nested architecture.
 
-## 🛠️ Technical Challenges & Solutions
+Arrays: Repository names are stored as arrays, requiring UNNEST operations to perform joins with language metadata.
 
-### 1. Navigating Complex Data Architectures (`UNNEST`)
-Unlike standard relational databases, GitHub's schema uses **Arrays** for repository names. I implemented `UNNEST` to flatten these structures, enabling precise joins with language metadata without losing data integrity.
+Structs: Committer timestamps are stored as STRUCT<seconds INT64, nanos INT64>. I used TIMESTAMP_SECONDS for normalization to enable temporal filtering.
 
-### 2. Normalizing Nested Timestamps
-The `commits` table stores temporal data in a `STRUCT` (`seconds` and `nanos`). 
-* **The Solution:** I used `TIMESTAMP_SECONDS` to transform raw Unix seconds into a standard `TIMESTAMP` format, allowing for accurate temporal filtering since January 1st, 2024.
+2.2 Cost Management (FinOps)
+A standard scan of the commits table involves 848 GB.
 
-### 3. FinOps & Cost Optimization (90% Efficiency Gain)
-A naive query would have scanned the entire commit table (**848 GB**). 
-* **The Strategy:** By combining a Common Table Expression (CTE) for language filtering and strict temporal boundaries, I reduced the scan volume to **96.1 GB**. This demonstrates a professional focus on cloud cost management.
+Optimization: By using a CTE to pre-identify Python-specific repos and applying a 2024-2025 temporal boundary, I reduced the scan volume to 96.1 GB.
 
+Persistence: Final results were materialized into a permanent table to avoid redundant scan costs for future BI consumption.
 
+3. Data Integrity & Noise Reduction
+Raw GitHub data is heavily saturated with automated activity. I implemented a multi-stage filtering strategy:
 
-## 🧹 Data Cleaning: Signal vs. Noise
-Big Data is inherently "dirty." To ensure the analysis focused on human talent rather than machine activity, I implemented:
-* **Advanced Regex Filtering:** Used `REGEXP_CONTAINS` to exclude common bot patterns (`bot`, `helper`, `automated`, etc.).
-* **Activity Thresholds:** Applied a `HAVING` clause to filter out sporadic contributors, focusing on users with sustained impact (>5 commits).
+Regex Filtering: Used REGEXP_CONTAINS to strip out common CI/CD and system patterns (bot, helper, engine, etc.).
 
-## 📊 Insights & Observations
-* **Data Recency:** The analysis reflects data up to **September 23, 2025** (the latest snapshot available in the public dataset).
-* **Automation Identification:** High-volume accounts like *Matthew Martin* (>60k commits) were identified as outliers. In a business context, identifying these "Automation Profiles" is crucial to avoid skewing engagement metrics.
-* **Talent Discovery:** The query successfully surfaced high-profile maintainers (e.g., *Jelmer Vernooij*), validating the logic's ability to identify real-world technical leaders.
+Thresholding: Applied HAVING commit_count > 5 to remove transient contributors and focus on consistent maintainers.
 
-## 📂 Repository Structure
-* `/sql`: `top_python_contributors.sql` (The core extraction logic).
-* `/data`: `top_contributors_sample.csv` (Cleaned output sample).
-* **Persistence:** Results were materialized into a permanent BigQuery table to optimize read performance for downstream BI tools (Looker/Tableau).
+4. Observations
+Timeline: The dataset snapshot used is current as of September 23, 2025.
+
+Outliers: Despite filtering, high-volume automated accounts (e.g., Matthew Martin) remain in the top tier. This confirms that simple string matching is insufficient for full bot-detection and requires further behavioral analysis.
+
+Validation: The presence of established maintainers (e.g., Jelmer Vernooij) validates the extraction logic.
+
+5. Repository Structure
+/sql: top_python_contributors.sql - Optimized extraction script.
+
+/data: results_sample.csv - Sample output of the processed dataset.
