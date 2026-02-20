@@ -35,7 +35,3 @@ Outliers: Despite filtering, high-volume automated accounts (e.g., Matthew Marti
 
 Validation: The presence of established maintainers (e.g., Jelmer Vernooij) validates the extraction logic.
 
-## 5. Repository Structure
-/sql: top_python_contributors.sql - Optimized extraction script.
-
-/data: results_sample.csv - Sample output of the processed dataset.
